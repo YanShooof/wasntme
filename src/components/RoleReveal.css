@@ -1,0 +1,260 @@
+.role-reveal {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  height: 100vh;
+  height: 100dvh;
+  background-color: #000;
+  color: #fff;
+  padding: 12px;
+  padding-bottom: max(12px, env(safe-area-inset-bottom));
+  box-sizing: border-box;
+  overflow: hidden;
+}
+
+.reveal-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  width: 100%;
+  max-width: 372px;
+  gap: 8px;
+  flex-shrink: 0;
+}
+
+.icon-button {
+  background: transparent;
+  border: none;
+  cursor: pointer;
+  padding: 8px;
+  transition: transform 0.2s ease;
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 40px;
+  min-height: 40px;
+}
+
+.icon-button:active {
+  transform: scale(0.92);
+}
+
+.back-button {
+  background-color: #fff;
+  color: #000;
+  border: none;
+  padding: 8px 16px;
+  border-radius: 32px;
+  font-weight: bold;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  box-shadow: 0 2px 4px rgba(255, 255, 255, 0.2);
+  flex-shrink: 0;
+}
+
+.back-button:active {
+  transform: scale(0.96);
+}
+
+.retry-button {
+  width: 120px;
+  background-color: #fff;
+  color: #000;
+  border: none;
+  padding: 12px 24px;
+  border-radius: 20px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  box-sizing: border-box;
+  text-transform: uppercase;
+  font-size: 14px;
+  letter-spacing: 0.5px;
+  flex-shrink: 0;
+}
+
+.spacer {
+  flex: 1;
+}
+
+.retry-button:not(:disabled):active {
+  transform: scale(0.96);
+}
+
+.retry-button:disabled {
+  background-color: #fff;
+  color: #808080;
+  opacity: 0.7;
+}
+
+.reveal-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 100px);
+  gap: 24px;
+  overflow-y: auto;
+  overflow-x: hidden;
+  align-content: start;
+  padding: 0 12px;
+  min-height: 0;
+  justify-content: center;
+  width: 100%;
+  max-width: 372px;
+  touch-action: pan-y;
+  flex-shrink: 1;
+  box-sizing: border-box;
+}
+
+.reveal-card {
+  width: 100px;
+  height: 100px;
+  background: linear-gradient(135deg, #fff, #e0e0e0);
+  border-radius: 32px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 0;
+  cursor: pointer;
+  user-select: none;
+  -webkit-user-select: none;
+  -webkit-touch-callout: none;
+  touch-action: none;
+  position: relative;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+  transition: all 0.15s ease;
+  flex-shrink: 0;
+}
+
+.reveal-card.active:active {
+  transform: scale(0.96);
+}
+
+.reveal-card.disabled {
+  cursor: default;
+  opacity: 0.6;
+  pointer-events: none;
+}
+
+.reveal-icon {
+  width: 80%;
+  height: auto;
+  max-width: 80px;
+  max-height: 80px;
+  object-fit: contain;
+  margin-bottom: 4px;
+  image-rendering: -webkit-optimize-contrast;
+  image-rendering: -moz-crisp-edges;
+  image-rendering: crisp-edges;
+  image-rendering: pixelated;
+  pointer-events: none;
+  user-select: none;
+  filter: contrast(1.1) brightness(1.05);
+  -webkit-filter: contrast(1.1) brightness(1.05);
+}
+
+.header-icon {
+  width: 24px;
+  height: 24px;
+  display: block;
+  filter: drop-shadow(0 1px 2px rgba(0, 0, 0, 0.3));
+}
+
+.reveal-name {
+  font-size: 11px;
+  font-weight: bold;
+  color: #000;
+  text-align: center;
+  word-break: break-word;
+  line-height: 1.2;
+}
+
+.player-name {
+  font-size: 11px;
+  font-weight: bold;
+  color: #000;
+  text-align: center;
+  word-break: break-word;
+  line-height: 1.2;
+}
+
+.player-name.grayed {
+  color: #808080;
+}
+
+.modal-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.7);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+}
+
+.modal-content {
+  background: #fff;
+  color: #000;
+  padding: 24px;
+  border-radius: 16px;
+  min-width: 280px;
+  max-width: 90%;
+  max-height: 80vh;
+  overflow-y: auto;
+}
+
+.modal-content h2 {
+  margin: 0 0 16px 0;
+  font-size: 20px;
+}
+
+.modal-content.player-edit {
+  min-width: 320px;
+}
+
+.player-inputs {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  margin-bottom: 16px;
+  max-height: 50vh;
+  overflow-y: auto;
+}
+
+.player-inputs input {
+  width: 100%;
+  padding: 12px;
+  border: 2px solid #ddd;
+  border-radius: 8px;
+  font-size: 16px;
+  box-sizing: border-box;
+}
+
+.modal-buttons {
+  display: flex;
+  gap: 8px;
+  justify-content: flex-end;
+}
+
+.modal-buttons button {
+  padding: 8px 16px;
+  border: none;
+  border-radius: 8px;
+  font-weight: bold;
+  cursor: pointer;
+  background-color: #000;
+  color: #fff;
+  transition: all 0.2s ease;
+}
+
+.modal-buttons button:active {
+  transform: scale(0.96);
+}
+
+.modal-buttons button[type="button"] {
+  background-color: #ddd;
+  color: #000;
+}

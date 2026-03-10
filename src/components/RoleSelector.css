@@ -1,0 +1,295 @@
+.role-selector {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  height: 100vh;
+  height: 100dvh;
+  background-color: #000;
+  color: #fff;
+  padding: 12px;
+  padding-bottom: max(12px, env(safe-area-inset-bottom));
+  box-sizing: border-box;
+  position: relative;
+  overflow: hidden;
+}
+
+.top-controls {
+  display: flex;
+  align-items: center;
+  width: 100%;
+  min-height: 48px;
+  position: absolute;
+  top: 12px;
+  left: 12px;
+  right: 12px;
+  z-index: 10;
+  width: calc(100% - 24px);
+}
+
+.title {
+  font-size: 16px;
+  font-weight: normal;
+  margin: 0;
+  text-align: center;
+  color: #fff;
+  flex-shrink: 0;
+}
+
+.spacer {
+  flex: 1;
+}
+
+.text-button {
+  background: transparent;
+  border: none;
+  color: #03A9F4;
+  font-size: 14px;
+  cursor: pointer;
+  padding: 8px;
+  font-weight: normal;
+}
+
+.text-button:active {
+  opacity: 0.7;
+}
+
+.add-custom-button {
+  background-color: #fff;
+  color: #000;
+  border: none;
+  padding: 8px 16px;
+  border-radius: 32px;
+  font-weight: bold;
+  cursor: pointer;
+  margin-bottom: 16px;
+  transition: all 0.2s ease;
+  box-shadow: 0 2px 4px rgba(255, 255, 255, 0.2);
+}
+
+.add-custom-button:active {
+  transform: scale(0.96);
+}
+
+.role-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 100px);
+  gap: 24px;
+  overflow-y: auto;
+  overflow-x: hidden;
+  align-content: start;
+  padding: 0 12px;
+  min-height: 0;
+  justify-content: center;
+  width: 100%;
+  max-width: 372px;
+  max-height: 496px;
+  touch-action: pan-y;
+  box-sizing: border-box;
+  flex-shrink: 0;
+}
+
+.role-card {
+  width: 100px;
+  height: 100px;
+  background: #FF0000;
+  border-radius: 32px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: flex-start;
+  padding: 0;
+  cursor: pointer;
+  user-select: none;
+  -webkit-user-select: none;
+  -webkit-touch-callout: none;
+  position: relative;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+  transition: all 0.2s ease;
+}
+
+.role-card.selected {
+  background: #00FF00;
+}
+
+.role-card.selected .role-name {
+  color: #000;
+}
+
+.role-card:active {
+  transform: scale(0.96);
+}
+
+.delete-button {
+  position: absolute;
+  top: 4px;
+  right: 4px;
+  width: 24px;
+  height: 24px;
+  background-color: #000;
+  color: #fff;
+  border: none;
+  border-radius: 50%;
+  font-size: 18px;
+  line-height: 1;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1;
+  padding: 0;
+}
+
+.delete-button:active {
+  background-color: #333;
+}
+
+.role-icon {
+  width: 64px;
+  height: 64px;
+  object-fit: contain;
+  margin-top: 8px;
+  image-rendering: -webkit-optimize-contrast;
+  image-rendering: -moz-crisp-edges;
+  image-rendering: crisp-edges;
+  image-rendering: pixelated;
+  pointer-events: none;
+  user-select: none;
+  filter: contrast(1.1) brightness(1.05);
+  -webkit-filter: contrast(1.1) brightness(1.05);
+}
+
+.role-placeholder {
+  width: 80px;
+  height: 60px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 48px;
+  color: #000;
+  opacity: 0.3;
+}
+
+.role-name {
+  font-size: 12px;
+  font-weight: bold;
+  color: #fff;
+  text-align: center;
+  word-break: break-word;
+  line-height: 1.2;
+  margin-top: auto;
+  margin-bottom: 8px;
+}
+
+.icon-button {
+  background: transparent;
+  border: none;
+  cursor: pointer;
+  padding: 8px;
+  transition: transform 0.2s ease;
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 40px;
+  min-height: 40px;
+}
+
+.icon-button:active {
+  transform: scale(0.92);
+}
+
+.header-icon {
+  width: 24px;
+  height: 24px;
+  display: block;
+  filter: drop-shadow(0 1px 2px rgba(0, 0, 0, 0.3));
+}
+
+.next-button {
+  background-color: #888;
+  color: #444;
+  border: none;
+  padding: 12px 24px;
+  border-radius: 20px;
+  font-size: 14px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  min-width: 64px;
+  flex-shrink: 0;
+}
+
+.next-button:not(:disabled):active {
+  transform: scale(0.96);
+}
+
+.next-button:disabled {
+  background-color: #888;
+  color: #444;
+  cursor: default;
+}
+
+.modal-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.7);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+}
+
+.modal-content {
+  background: #fff;
+  color: #000;
+  padding: 24px;
+  border-radius: 16px;
+  min-width: 280px;
+  max-width: 90%;
+}
+
+.modal-content h2 {
+  margin: 0 0 16px 0;
+  font-size: 20px;
+}
+
+.modal-content input {
+  width: 100%;
+  padding: 12px;
+  border: 2px solid #ddd;
+  border-radius: 8px;
+  font-size: 16px;
+  box-sizing: border-box;
+  margin-bottom: 16px;
+}
+
+.modal-buttons {
+  display: flex;
+  gap: 8px;
+  justify-content: flex-end;
+}
+
+.modal-buttons button {
+  padding: 8px 16px;
+  border: none;
+  border-radius: 8px;
+  font-weight: bold;
+  cursor: pointer;
+  background-color: #000;
+  color: #fff;
+  transition: all 0.2s ease;
+}
+
+.modal-buttons button:active {
+  transform: scale(0.96);
+}
+
+.modal-buttons button[type="button"] {
+  background-color: #ddd;
+  color: #000;
+}
