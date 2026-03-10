@@ -111,7 +111,7 @@ export default function RoleReveal({ roles, onBack }: RoleRevealProps) {
           Back
         </button>
         <button className="icon-button" onClick={handlePlayerEdit}>
-          <img src="/settings.svg" alt="Settings" className="header-icon" />
+          <img src={`${import.meta.env.BASE_URL}settings.svg`} alt="Settings" className="header-icon" />
         </button>
       </div>
 
@@ -145,7 +145,7 @@ export default function RoleReveal({ roles, onBack }: RoleRevealProps) {
                 <>
                   {iconPath && (
                     <img
-                      src={`/icons/${iconPath}`}
+                      src={`${import.meta.env.BASE_URL}icons/${iconPath}`}
                       alt={role}
                       className="reveal-icon"
                     />
@@ -200,7 +200,7 @@ function PlayerEditModal({ players, onSave, onReset, onClose }: PlayerEditModalP
         <div style={{ display: 'flex', alignItems: 'center', marginBottom: '16px' }}>
           <h2 style={{ margin: 0, flex: 1 }}>Add players</h2>
           <button className="icon-button" onClick={onReset}>
-            <img src="/reset.svg" alt="Reset" className="header-icon" />
+            <img src={`${import.meta.env.BASE_URL}reset.svg`} alt="Reset" className="header-icon" />
           </button>
         </div>
         <div className="player-inputs">

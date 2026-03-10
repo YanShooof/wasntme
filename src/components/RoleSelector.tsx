@@ -269,7 +269,7 @@ export default function RoleSelector({ onStart }: RoleSelectorProps) {
           }}
         >
           <img
-            src={isEditMode ? '/settings.svg' : '/library-books.svg'}
+            src={isEditMode ? `${import.meta.env.BASE_URL}settings.svg` : `${import.meta.env.BASE_URL}library-books.svg`}
             alt={isEditMode ? 'Settings' : 'Rules'}
             className='header-icon'
           />
@@ -308,7 +308,7 @@ export default function RoleSelector({ onStart }: RoleSelectorProps) {
             >
               {iconPath && (
                 <img 
-                  src={`/icons/${iconPath}`} 
+                  src={`${import.meta.env.BASE_URL}icons/${iconPath}`} 
                   alt={role}
                   className='role-icon'
                   draggable={false}
