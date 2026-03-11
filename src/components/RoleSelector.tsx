@@ -433,7 +433,7 @@ export default function RoleSelector({ onStart }: RoleSelectorProps) {
         onContextMenu={(e) => e.preventDefault()}
         {...useLongPress(handleLongPressNext)}
       >
-        {selectedIndices.size > 0 ? `Next ${selectedIndices.size}` : 'Next'}
+        {isWideMode ? `Next ${playerCount}` : selectedIndices.size > 0 ? `Next ${selectedIndices.size}` : 'Next'}
       </button>
       <div className='spacer' />
 
