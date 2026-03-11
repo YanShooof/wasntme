@@ -121,6 +121,8 @@ export default function RoleSelector({ onStart }: RoleSelectorProps) {
     isInput?: boolean;
     hideCancel?: boolean;
     formatPrefixBold?: boolean;
+    hideActions?: boolean;
+    largeMessage?: boolean;
     onConfirm: (value?: string) => void;
   } | null>(null);
   
@@ -312,6 +314,8 @@ export default function RoleSelector({ onStart }: RoleSelectorProps) {
       isInput: false,
       hideCancel: true,
       formatPrefixBold: true,
+      hideActions: true,
+      largeMessage: true,
       onConfirm: () => setDialog(null),
     });
   };
@@ -446,6 +450,8 @@ export default function RoleSelector({ onStart }: RoleSelectorProps) {
           isInput={dialog.isInput}
           hideCancel={dialog.hideCancel}
           formatPrefixBold={dialog.formatPrefixBold}
+          hideActions={dialog.hideActions}
+          largeMessage={dialog.largeMessage}
           onConfirm={dialog.onConfirm}
           onCancel={() => setDialog(null)}
         />

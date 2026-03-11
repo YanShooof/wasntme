@@ -12,6 +12,8 @@ interface DialogProps {
   isInput?: boolean;
   hideCancel?: boolean;
   formatPrefixBold?: boolean;
+  hideActions?: boolean;
+  largeMessage?: boolean;
 }
 
 export default function Dialog({ 
@@ -24,7 +26,9 @@ export default function Dialog({
   cancelText = 'Cancel',
   isInput = false,
   hideCancel = false,
-  formatPrefixBold = false
+  formatPrefixBold = false,
+  hideActions = false,
+  largeMessage = false
 }: DialogProps) {
   const [value, setValue] = useState(inputValue);
   const inputRef = useRef<HTMLInputElement>(null);
@@ -91,7 +95,7 @@ export default function Dialog({
     <div className="dialog-overlay" onClick={handleCancel}>
       <div className="dialog-content" onClick={(e) => e.stopPropagation()}>
         {title && <div className={`dialog-title ${hasHebrew ? 'rtl' : ''}`} dir={hasHebrew ? 'rtl' : 'ltr'}>{title}</div>}
-        {message && <div className={`dialog-message ${hasHebrew ? 'rtl' : ''}`} dir={hasHebrew ? 'rtl' : 'ltr'}>{renderMessage(message)}</div>}
+        {message && <div className={`dialog-message ${hasHebrew ? 'rtl' : ''} ${largeMessage ? 'large' : ''}`} dir={hasHebrew ? 'rtl' : 'ltr'}>{renderMessage(message)}</div>}
         {isInput && (
           <input
             ref={inputRef}
@@ -111,16 +115,18 @@ export default function Dialog({
             }}
           />
         )}
-        <div className="dialog-actions">
-          {!hideCancel && (
-            <button className="dialog-button" onClick={handleCancel}>
-              {cancelText}
+        {!hideActions && (
+          <div className="dialog-actions">
+            {!hideCancel && (
+              <button className="dialog-button" onClick={handleCancel}>
+                {cancelText}
+              </button>
+            )}
+            <button className="dialog-button dialog-button-primary" onClick={handleConfirm}>
+              {confirmText}
             </button>
-          )}
-          <button className="dialog-button dialog-button-primary" onClick={handleConfirm}>
-            {confirmText}
-          </button>
-        </div>
+          </div>
+        )}
       </div>
     </div>
   );
