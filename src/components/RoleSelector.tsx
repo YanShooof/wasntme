@@ -12,6 +12,8 @@ const useLongPress = (callback: () => void, ms = 500) => {
   const timerRef = useRef<number | undefined>(undefined);
   const callbackRef = useRef(callback);
   const pointerStartRef = useRef<{ x: number; y: number } | null>(null);
+  const ignoreMouseRef = useRef(false);
+  const ignoreMouseTimeoutRef = useRef<number | undefined>(undefined);
   const SCROLL_THRESHOLD = 10;
 
   useEffect(() => {
@@ -24,6 +26,17 @@ const useLongPress = (callback: () => void, ms = 500) => {
       timerRef.current = undefined;
     }
     pointerStartRef.current = null;
+  };
+
+  const markTouchInteraction = () => {
+    ignoreMouseRef.current = true;
+    if (ignoreMouseTimeoutRef.current) {
+      clearTimeout(ignoreMouseTimeoutRef.current);
+    }
+    ignoreMouseTimeoutRef.current = window.setTimeout(() => {
+      ignoreMouseRef.current = false;
+      ignoreMouseTimeoutRef.current = undefined;
+    }, 800);
   };
 
   const startPress = (e: React.PointerEvent) => {
@@ -47,21 +60,46 @@ const useLongPress = (callback: () => void, ms = 500) => {
   };
 
   useEffect(() => {
-    return () => clearPress();
+    return () => {
+      clearPress();
+      if (ignoreMouseTimeoutRef.current) {
+        clearTimeout(ignoreMouseTimeoutRef.current);
+      }
+    };
   }, []);
 
   return {
-    onMouseDown: (e: React.MouseEvent) => startPress(e as unknown as React.PointerEvent),
-    onMouseUp: clearPress,
-    onMouseLeave: clearPress,
-    onMouseMove: (e: React.MouseEvent) => onPointerMove(e as unknown as React.PointerEvent),
+    onMouseDown: (e: React.MouseEvent) => {
+      if (ignoreMouseRef.current) return;
+      startPress(e as unknown as React.PointerEvent);
+    },
+    onMouseUp: () => {
+      if (ignoreMouseRef.current) return;
+      clearPress();
+    },
+    onMouseLeave: () => {
+      if (ignoreMouseRef.current) return;
+      clearPress();
+    },
+    onMouseMove: (e: React.MouseEvent) => {
+      if (ignoreMouseRef.current) return;
+      onPointerMove(e as unknown as React.PointerEvent);
+    },
     onTouchStart: (e: React.TouchEvent) => {
+      markTouchInteraction();
       const touch = e.touches[0];
       startPress({ clientX: touch.clientX, clientY: touch.clientY } as unknown as React.PointerEvent);
     },
-    onTouchEnd: clearPress,
-    onTouchCancel: clearPress,
+    onTouchEnd: () => {
+      markTouchInteraction();
+      clearPress();
+    },
+    onTouchCancel: () => {
+      markTouchInteraction();
+      clearPress();
+    },
     onTouchMove: (e: React.TouchEvent) => {
+      markTouchInteraction();
       const touch = e.touches[0];
       onPointerMove({ clientX: touch.clientX, clientY: touch.clientY } as unknown as React.PointerEvent);
     },
@@ -69,6 +107,7 @@ const useLongPress = (callback: () => void, ms = 500) => {
 };
 
 export default function RoleSelector({ onStart }: RoleSelectorProps) {
+  const LONG_PRESS_VIBRATION_MS = 20;
   const [customRoles, setCustomRoles] = useState<string[]>([...defaultRoles]);
   const [selectedIndices, setSelectedIndices] = useState<Set<number>>(new Set());
   const [isEditMode, setIsEditMode] = useState(false);
@@ -80,10 +119,16 @@ export default function RoleSelector({ onStart }: RoleSelectorProps) {
     message?: string;
     inputValue?: string;
     isInput?: boolean;
+    hideCancel?: boolean;
+    formatPrefixBold?: boolean;
     onConfirm: (value?: string) => void;
   } | null>(null);
   
   const pointerStateRef = useRef<Map<number, { x: number; y: number; index: number; scrolling: boolean }>>(new Map());
+  const longPressConsumedRef = useRef<Set<number>>(new Set());
+  const pendingEditLongPressRef = useRef<{ index: number; role: string } | null>(null);
+  const nextLongPressConsumedRef = useRef(false);
+  const lastNextLongPressAtRef = useRef(0);
   const SCROLL_THRESHOLD = 10;
 
   const vibrateTap = (ms = 20) => {
@@ -112,10 +157,18 @@ export default function RoleSelector({ onStart }: RoleSelectorProps) {
     } else {
       newSelected.add(index);
     }
+
+    if (isWideMode && playerCount > newSelected.size) {
+      setIsWideMode(false);
+      setPlayerCount(0);
+    }
+
     setSelectedIndices(newSelected);
   };
 
   const handleRolePointerDown = (index: number, e: React.PointerEvent) => {
+    longPressConsumedRef.current.delete(index);
+    pendingEditLongPressRef.current = null;
     pointerStateRef.current.set(e.pointerId, { 
       x: e.clientX, 
       y: e.clientY, 
@@ -143,6 +196,18 @@ export default function RoleSelector({ onStart }: RoleSelectorProps) {
   const handleRolePointerUp = (index: number, e: React.PointerEvent) => {
     const state = pointerStateRef.current.get(e.pointerId);
     pointerStateRef.current.delete(e.pointerId);
+
+    if (longPressConsumedRef.current.has(index)) {
+      longPressConsumedRef.current.delete(index);
+
+      const pendingEdit = pendingEditLongPressRef.current;
+      if (pendingEdit && pendingEdit.index === index) {
+        pendingEditLongPressRef.current = null;
+        promptForRoleName(pendingEdit.index, pendingEdit.role);
+      }
+
+      return;
+    }
     
     if (state && !state.scrolling && state.index === index) {
       toggleRole(index);
@@ -160,14 +225,27 @@ export default function RoleSelector({ onStart }: RoleSelectorProps) {
     vibrateTap();
     setCustomRoles([...defaultRoles]);
     setSelectedIndices(new Set());
+    setIsWideMode(false);
+    setPlayerCount(0);
     localStorage.setItem('customRoles', JSON.stringify(defaultRoles));
     setToast('Reset');
   };
 
   const handleStart = () => {
-    vibrateTap();
-    if (selectedIndices.size < 3 || selectedIndices.size > 15) {
+    if (nextLongPressConsumedRef.current) {
+      nextLongPressConsumedRef.current = false;
       return;
+    }
+
+    vibrateTap();
+    if (!isWideMode) {
+      if (selectedIndices.size < 3 || selectedIndices.size > 15) {
+        return;
+      }
+    } else {
+      if (playerCount < 3 || playerCount > selectedIndices.size) {
+        return;
+      }
     }
 
     let finalRoles = Array.from(selectedIndices).map(i => customRoles[i]);
@@ -204,7 +282,18 @@ export default function RoleSelector({ onStart }: RoleSelectorProps) {
   };
 
   const handleLongPressNext = () => {
-    vibrateTap(35);
+    const now = Date.now();
+    if (now - lastNextLongPressAtRef.current < 700) {
+      return;
+    }
+    lastNextLongPressAtRef.current = now;
+
+    if (!isWideMode && selectedIndices.size > 15) {
+      return;
+    }
+
+    nextLongPressConsumedRef.current = true;
+    vibrateTap(LONG_PRESS_VIBRATION_MS);
     if (!isWideMode) {
       setIsWideMode(true);
       setPlayerCount(selectedIndices.size);
@@ -221,13 +310,17 @@ export default function RoleSelector({ onStart }: RoleSelectorProps) {
       title: role,
       message: cleanText,
       isInput: false,
+      hideCancel: true,
+      formatPrefixBold: true,
       onConfirm: () => setDialog(null),
     });
   };
 
   const handleRoleLongPress = (role: string, index: number) => {
+    vibrateTap(LONG_PRESS_VIBRATION_MS);
+    longPressConsumedRef.current.add(index);
     if (isEditMode) {
-      promptForRoleName(index, role);
+      pendingEditLongPressRef.current = { index, role };
     } else {
       showRuleExplanation(role);
     }
@@ -250,6 +343,11 @@ export default function RoleSelector({ onStart }: RoleSelectorProps) {
   };
 
   const isNextEnabled = selectedIndices.size >= 3 && selectedIndices.size <= 15;
+  const nextButtonStyle = isWideMode
+    ? { backgroundColor: '#fff', color: '#000' }
+    : isNextEnabled
+      ? { backgroundColor: '#888', color: '#000' }
+      : { backgroundColor: '#888', color: '#444' };
 
   return (
     <div className='role-selector'>
@@ -260,9 +358,10 @@ export default function RoleSelector({ onStart }: RoleSelectorProps) {
           </>
         )}
 
+        <div className='spacer' />
+
         <button
           className='icon-button'
-          style={{ marginLeft: 'auto' }}
           onClick={() => {
             vibrateTap();
             setIsEditMode(!isEditMode);
@@ -296,6 +395,7 @@ export default function RoleSelector({ onStart }: RoleSelectorProps) {
               className={`role-card ${isSelected ? 'selected' : ''}`}
               onPointerDown={(e) => handleRolePointerDown(index, e)}
               onPointerUp={(e) => handleRolePointerUp(index, e)}
+              onSelectStart={(e) => e.preventDefault()}
               onContextMenu={(e) => {
                 e.preventDefault();
                 if (isEditMode) {
@@ -323,16 +423,17 @@ export default function RoleSelector({ onStart }: RoleSelectorProps) {
       <div className='spacer' />
       <button
         className='next-button'
-        style={isNextEnabled || isWideMode ? { backgroundColor: '#fff', color: '#000' } : undefined}
+        style={nextButtonStyle}
         disabled={!isNextEnabled && !isWideMode}
-        onClick={handleStart}
-        onContextMenu={(e) => {
-          e.preventDefault();
-          handleLongPressNext();
+        onPointerDown={() => {
+          nextLongPressConsumedRef.current = false;
         }}
+        onClick={handleStart}
+        onSelectStart={(e) => e.preventDefault()}
+        onContextMenu={(e) => e.preventDefault()}
         {...useLongPress(handleLongPressNext)}
       >
-        {isWideMode ? `Wide ${playerCount}` : selectedIndices.size > 0 ? `Next ${selectedIndices.size}` : 'Next'}
+        {selectedIndices.size > 0 ? `Next ${selectedIndices.size}` : 'Next'}
       </button>
       <div className='spacer' />
 
@@ -343,6 +444,8 @@ export default function RoleSelector({ onStart }: RoleSelectorProps) {
           message={dialog.message}
           inputValue={dialog.inputValue}
           isInput={dialog.isInput}
+          hideCancel={dialog.hideCancel}
+          formatPrefixBold={dialog.formatPrefixBold}
           onConfirm={dialog.onConfirm}
           onCancel={() => setDialog(null)}
         />

@@ -20,6 +20,7 @@ export default function RoleReveal({ roles, onBack }: RoleRevealProps) {
   // Pointer → card index mapping (pointerId is unique per finger/mouse)
   const pointerToCardRef = useRef<Map<number, number>>(new Map());
   const revealedIndicesRef = useRef<Set<number>>(new Set());
+  const finalizePointerRef = useRef<(pointerId: number) => void>(() => {});
 
   // Keep ref in sync with state
   useEffect(() => {
@@ -51,25 +52,47 @@ export default function RoleReveal({ roles, onBack }: RoleRevealProps) {
 
   const vibrateTap = (ms = 20) => { navigator.vibrate?.(ms); };
 
-  const handlePointerDown = (index: number, e: React.PointerEvent) => {
-    if (revealedIndicesRef.current.has(index)) return;
-    // Capture pointer so pointerup ALWAYS fires on this element
-    (e.target as HTMLElement).setPointerCapture(e.pointerId);
-    pointerToCardRef.current.set(e.pointerId, index);
-    setCurrentlyPressedIndices(prev => { const s = new Set(prev); s.add(index); return s; });
-  };
-
-  const handlePointerUp = (e: React.PointerEvent) => {
-    const index = pointerToCardRef.current.get(e.pointerId);
+  const finalizePointer = (pointerId: number) => {
+    const index = pointerToCardRef.current.get(pointerId);
     if (index === undefined) return;
-    pointerToCardRef.current.delete(e.pointerId);
+    pointerToCardRef.current.delete(pointerId);
     if (revealedIndicesRef.current.has(index)) return;
-    // Check if another pointer is still on this card
     const stillPressed = Array.from(pointerToCardRef.current.values()).includes(index);
     if (!stillPressed) {
       setCurrentlyPressedIndices(prev => { const s = new Set(prev); s.delete(index); return s; });
       setRevealedIndices(prev => { const s = new Set(prev); s.add(index); return s; });
     }
+  };
+
+  finalizePointerRef.current = finalizePointer;
+
+  useEffect(() => {
+    const handleWindowPointerUp = (e: PointerEvent) => {
+      finalizePointerRef.current(e.pointerId);
+    };
+
+    window.addEventListener('pointerup', handleWindowPointerUp);
+    window.addEventListener('pointercancel', handleWindowPointerUp);
+
+    return () => {
+      window.removeEventListener('pointerup', handleWindowPointerUp);
+      window.removeEventListener('pointercancel', handleWindowPointerUp);
+    };
+  }, []);
+
+  const handlePointerDown = (index: number, e: React.PointerEvent) => {
+    if (revealedIndicesRef.current.has(index)) return;
+    // Capture pointer so pointerup ALWAYS fires on this element
+    e.currentTarget.setPointerCapture(e.pointerId);
+    pointerToCardRef.current.set(e.pointerId, index);
+    setCurrentlyPressedIndices(prev => { const s = new Set(prev); s.add(index); return s; });
+  };
+
+  const handlePointerUp = (e: React.PointerEvent) => {
+    if (e.currentTarget.hasPointerCapture(e.pointerId)) {
+      e.currentTarget.releasePointerCapture(e.pointerId);
+    }
+    finalizePointer(e.pointerId);
   };
 
   const handlePasswordConfirm = (password?: string) => {
@@ -101,6 +124,9 @@ export default function RoleReveal({ roles, onBack }: RoleRevealProps) {
     setShowPlayerEdit(true);
   };
 
+  const primaryRoles = roles.slice(0, 12);
+  const extraRoles = roles.slice(12, 15);
+
   return (
     <div className="role-reveal">
       <div className="reveal-header">
@@ -110,55 +136,106 @@ export default function RoleReveal({ roles, onBack }: RoleRevealProps) {
         >
           Back
         </button>
+        <div className="spacer" />
         <button className="icon-button" onClick={handlePlayerEdit}>
           <img src={`${import.meta.env.BASE_URL}settings.svg`} alt="Settings" className="header-icon" />
         </button>
       </div>
 
       <div className="spacer" />
-      <button
-        className="retry-button"
-        disabled={revealedIndices.size === 0}
-        onClick={() => { vibrateTap(); setPasswordDialog(true); }}
-      >
-        Retry
-      </button>
+      <div className="retry-anchor">
+        <button
+          className="retry-button retry-floating"
+          disabled={revealedIndices.size === 0}
+          onClick={() => { vibrateTap(); setPasswordDialog(true); }}
+        >
+          Retry
+        </button>
+      </div>
       <div className="spacer" />
 
-      <div className="reveal-grid">
-        {roles.map((role, index) => {
-          const isRevealed = revealedIndices.has(index);
-          const isCurrentlyPressed = currentlyPressedIndices.has(index);
-          const iconPath = roleIcons[role.toLowerCase()];
-          const playerName = players[index] || `Player ${index + 1}`;
+      <div className="reveal-grid-stack">
+        <div className="reveal-grid">
+          {primaryRoles.map((role, index) => {
+            const actualIndex = index;
+            const isRevealed = revealedIndices.has(actualIndex);
+            const isCurrentlyPressed = currentlyPressedIndices.has(actualIndex);
+            const iconPath = roleIcons[role.toLowerCase()];
+            const playerName = players[actualIndex] || `Player ${actualIndex + 1}`;
 
-          return (
-            <div
-              key={index}
-              className={`reveal-card ${isRevealed ? 'disabled' : 'active'}`}
-              onPointerDown={(e) => handlePointerDown(index, e)}
-              onPointerUp={handlePointerUp}
-              onPointerCancel={handlePointerUp}
-              onContextMenu={(e) => e.preventDefault()}
-            >
-              {isCurrentlyPressed ? (
-                <>
-                  {iconPath && (
-                    <img
-                      src={`${import.meta.env.BASE_URL}icons/${iconPath}`}
-                      alt={role}
-                      className="reveal-icon"
-                    />
+            return (
+              <div
+                key={actualIndex}
+                className={`reveal-card ${isRevealed ? 'disabled' : 'active'}`}
+                onPointerDown={(e) => handlePointerDown(actualIndex, e)}
+                onPointerUp={handlePointerUp}
+                onPointerCancel={handlePointerUp}
+                onLostPointerCapture={handlePointerUp}
+                onContextMenu={(e) => e.preventDefault()}
+              >
+                {isCurrentlyPressed ? (
+                  <>
+                    {iconPath && (
+                      <img
+                        src={`${import.meta.env.BASE_URL}icons/${iconPath}`}
+                        alt={role}
+                        className="reveal-icon"
+                      />
+                    )}
+                    <div className="reveal-name">{role}</div>
+                  </>
+                ) : (
+                  <div className={`player-name ${isRevealed ? 'grayed' : ''}`}>{playerName}</div>
+                )}
+              </div>
+            );
+          })}
+        </div>
+
+        {extraRoles.length > 0 && (
+          <div className="reveal-extra-row reveal-extra-row-overlay">
+            {extraRoles.map((role, index) => {
+              const actualIndex = index + 12;
+              const isRevealed = revealedIndices.has(actualIndex);
+              const isCurrentlyPressed = currentlyPressedIndices.has(actualIndex);
+              const iconPath = roleIcons[role.toLowerCase()];
+              const playerName = players[actualIndex] || `Player ${actualIndex + 1}`;
+
+              return (
+                <div
+                  key={actualIndex}
+                  className={`reveal-card ${isRevealed ? 'disabled' : 'active'}`}
+                  onPointerDown={(e) => handlePointerDown(actualIndex, e)}
+                  onPointerUp={handlePointerUp}
+                  onPointerCancel={handlePointerUp}
+                  onLostPointerCapture={handlePointerUp}
+                  onContextMenu={(e) => e.preventDefault()}
+                >
+                  {isCurrentlyPressed ? (
+                    <>
+                      {iconPath && (
+                        <img
+                          src={`${import.meta.env.BASE_URL}icons/${iconPath}`}
+                          alt={role}
+                          className="reveal-icon"
+                        />
+                      )}
+                      <div className="reveal-name">{role}</div>
+                    </>
+                  ) : (
+                    <div className={`player-name ${isRevealed ? 'grayed' : ''}`}>{playerName}</div>
                   )}
-                  <div className="reveal-name">{role}</div>
-                </>
-              ) : (
-                <div className={`player-name ${isRevealed ? 'grayed' : ''}`}>{playerName}</div>
-              )}
-            </div>
-          );
-        })}
+                </div>
+              );
+            })}
+          </div>
+        )}
       </div>
+
+      <div className="spacer" />
+      <button className="retry-button retry-placeholder" tabIndex={-1} aria-hidden="true">
+        Retry
+      </button>
       <div className="spacer" />
 
       {showPlayerEdit && (
@@ -194,12 +271,35 @@ interface PlayerEditModalProps {
 function PlayerEditModal({ players, onSave, onReset, onClose }: PlayerEditModalProps) {
   const [editedPlayers, setEditedPlayers] = useState([...players]);
 
+  const vibrateTap = (pattern: number | number[]) => {
+    if (typeof navigator !== 'undefined' && 'vibrate' in navigator) {
+      navigator.vibrate(pattern);
+    }
+  };
+
+  const handleResetClick = () => {
+    vibrateTap(12);
+    const defaultNames = Array.from({ length: editedPlayers.length }, (_, i) => `Player ${i + 1}`);
+    setEditedPlayers(defaultNames);
+    onReset();
+  };
+
+  const handleCancel = () => {
+    vibrateTap(12);
+    onClose();
+  };
+
+  const handleAdd = () => {
+    vibrateTap([12, 18, 12]);
+    onSave(editedPlayers);
+  };
+
   return (
-    <div className="modal-overlay" onClick={onClose}>
+    <div className="modal-overlay" onClick={handleCancel}>
       <div className="modal-content player-edit" onClick={(e) => e.stopPropagation()}>
         <div style={{ display: 'flex', alignItems: 'center', marginBottom: '16px' }}>
           <h2 style={{ margin: 0, flex: 1 }}>Add players</h2>
-          <button className="icon-button" onClick={onReset}>
+          <button className="icon-button" onClick={handleResetClick}>
             <img src={`${import.meta.env.BASE_URL}reset.svg`} alt="Reset" className="header-icon" />
           </button>
         </div>
@@ -220,8 +320,8 @@ function PlayerEditModal({ players, onSave, onReset, onClose }: PlayerEditModalP
           ))}
         </div>
         <div className="modal-buttons">
-          <button type="button" onClick={onClose}>Cancel</button>
-          <button onClick={() => onSave(editedPlayers)}>Add</button>
+          <button type="button" onClick={handleCancel}>Cancel</button>
+          <button onClick={handleAdd}>Add</button>
         </div>
       </div>
     </div>

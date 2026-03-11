@@ -10,16 +10,18 @@
   padding-bottom: max(12px, env(safe-area-inset-bottom));
   box-sizing: border-box;
   overflow: hidden;
+  position: relative;
 }
 
 .reveal-header {
   display: flex;
-  justify-content: space-between;
   align-items: center;
-  width: 100%;
-  max-width: 372px;
-  gap: 8px;
-  flex-shrink: 0;
+  min-height: 48px;
+  position: absolute;
+  top: 12px;
+  left: 12px;
+  right: 12px;
+  z-index: 10;
 }
 
 .icon-button {
@@ -58,13 +60,14 @@
 }
 
 .retry-button {
-  width: 120px;
+  width: auto;
+  min-width: 0;
   background-color: #fff;
   color: #000;
   border: none;
-  padding: 12px 24px;
+  padding: 12px 18px;
   border-radius: 20px;
-  font-weight: 500;
+  font-weight: bold;
   cursor: pointer;
   transition: all 0.2s ease;
   box-sizing: border-box;
@@ -74,18 +77,90 @@
   flex-shrink: 0;
 }
 
+.retry-anchor {
+  height: 19px;
+  width: 100%;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  flex-shrink: 0;
+  position: relative;
+}
+
+.retry-button.retry-floating {
+  position: absolute;
+  top: 50%;
+  transform: translateY(-50%);
+}
+
 .spacer {
   flex: 1;
 }
 
+.header-space {
+  height: 48px;
+  flex-shrink: 0;
+}
+
+.action-slot {
+  height: 52px;
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+  max-width: 420px;
+}
+
+.grid-wrapper {
+  flex: 1;
+  min-height: 0;
+  width: 100%;
+  max-width: 420px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
+}
+
 .retry-button:not(:disabled):active {
-  transform: scale(0.96);
+  transform: translateY(-50%) scale(0.96);
 }
 
 .retry-button:disabled {
   background-color: #fff;
   color: #808080;
   opacity: 0.7;
+}
+
+.retry-button.retry-placeholder {
+  visibility: hidden;
+  pointer-events: none;
+}
+
+.reveal-extra-row {
+  display: grid;
+  grid-template-columns: repeat(3, 100px);
+  gap: 24px;
+  justify-content: center;
+  width: 100%;
+  max-width: 372px;
+  padding: 0 12px;
+  box-sizing: border-box;
+}
+
+.reveal-grid-stack {
+  position: relative;
+  width: 100%;
+  max-width: 372px;
+  overflow: visible;
+}
+
+.reveal-extra-row-overlay {
+  position: absolute;
+  top: calc(100% + 24px);
+  left: 0;
+  right: 0;
 }
 
 .reveal-grid {
@@ -96,13 +171,14 @@
   overflow-x: hidden;
   align-content: start;
   padding: 0 12px;
-  min-height: 0;
   justify-content: center;
   width: 100%;
   max-width: 372px;
+  height: 472px;
+  max-height: 472px;
   touch-action: pan-y;
-  flex-shrink: 1;
   box-sizing: border-box;
+  scrollbar-gutter: stable;
 }
 
 .reveal-card {
@@ -137,12 +213,13 @@
 }
 
 .reveal-icon {
-  width: 80%;
-  height: auto;
-  max-width: 80px;
-  max-height: 80px;
+  width: 64px;
+  height: 64px;
   object-fit: contain;
-  margin-bottom: 4px;
+  position: absolute;
+  top: 8px;
+  left: 50%;
+  transform: translateX(-50%);
   image-rendering: -webkit-optimize-contrast;
   image-rendering: -moz-crisp-edges;
   image-rendering: crisp-edges;
@@ -167,6 +244,10 @@
   text-align: center;
   word-break: break-word;
   line-height: 1.2;
+  position: absolute;
+  bottom: 8px;
+  left: 4px;
+  right: 4px;
 }
 
 .player-name {
@@ -176,6 +257,7 @@
   text-align: center;
   word-break: break-word;
   line-height: 1.2;
+  padding: 0 4px;
 }
 
 .player-name.grayed {

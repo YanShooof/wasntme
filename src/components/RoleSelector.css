@@ -16,14 +16,12 @@
 .top-controls {
   display: flex;
   align-items: center;
-  width: 100%;
   min-height: 48px;
   position: absolute;
   top: 12px;
   left: 12px;
   right: 12px;
   z-index: 10;
-  width: calc(100% - 24px);
 }
 
 .title {
@@ -78,14 +76,14 @@
   overflow-x: hidden;
   align-content: start;
   padding: 0 12px;
-  min-height: 0;
   justify-content: center;
   width: 100%;
   max-width: 372px;
-  max-height: 496px;
+  height: 472px;
+  max-height: 472px;
   touch-action: pan-y;
   box-sizing: border-box;
-  flex-shrink: 0;
+  scrollbar-gutter: stable;
 }
 
 .role-card {
@@ -96,7 +94,7 @@
   display: flex;
   flex-direction: column;
   align-items: center;
-  justify-content: flex-start;
+  justify-content: center;
   padding: 0;
   cursor: pointer;
   user-select: none;
@@ -148,6 +146,7 @@
   height: 64px;
   object-fit: contain;
   margin-top: 8px;
+  margin-bottom: 0;
   image-rendering: -webkit-optimize-contrast;
   image-rendering: -moz-crisp-edges;
   image-rendering: crisp-edges;
@@ -212,7 +211,7 @@
   padding: 12px 24px;
   border-radius: 20px;
   font-size: 14px;
-  font-weight: 500;
+  font-weight: bold;
   cursor: pointer;
   transition: all 0.2s ease;
   text-transform: uppercase;
