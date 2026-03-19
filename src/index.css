@@ -3,6 +3,13 @@
   margin: 0;
   padding: 0;
   -webkit-tap-highlight-color: transparent;
+  /* Disable the default callout shown when you touch and hold on iOS/WebKit */
+  -webkit-touch-callout: none; 
+  /* Disables text selection across different browsers */
+  -webkit-user-select: none; /* Safari */
+  -moz-user-select: none;    /* Firefox */
+  -ms-user-select: none;     /* IE/Edge */
+  user-select: none;         /* Standard */
 }
 
 body {
@@ -12,16 +19,15 @@ body {
   -moz-osx-font-smoothing: grayscale;
   overflow: hidden;
   touch-action: manipulation;
-  /* Disable native text selection & long-press vibration across the entire app */
-  -webkit-touch-callout: none;
-  -webkit-user-select: none;
-  user-select: none;
 }
 
 input, textarea {
   /* Re-enable selection only for inputs so they remain editable */
   -webkit-user-select: auto;
+  -moz-user-select: auto;
+  -ms-user-select: auto;
   user-select: auto;
+  -webkit-touch-callout: default;
 }
 
 #root {

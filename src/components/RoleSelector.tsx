@@ -123,7 +123,7 @@ const useLongPress = (callback: () => void, ms = 500) => {
 
 export default function RoleSelector({ onStart }: RoleSelectorProps) {
   const HAPTIC_CONTEXT_CLICK = 10;
-  const HAPTIC_LONG_PRESS = 14;
+  const HAPTIC_LONG_PRESS = 100; // Solid, noticeable bump for long press
   const [customRoles, setCustomRoles] = useState<string[]>([...defaultRoles]);
   const [selectedIndices, setSelectedIndices] = useState<Set<number>>(new Set());
   const [isEditMode, setIsEditMode] = useState(false);
@@ -423,11 +423,6 @@ export default function RoleSelector({ onStart }: RoleSelectorProps) {
               onSelectStart={(e) => e.preventDefault()}
               onContextMenu={(e) => {
                 e.preventDefault();
-                if (isEditMode) {
-                  promptForRoleName(index, role);
-                } else {
-                  showRuleExplanation(role);
-                }
               }}
               {...longPressHandlers}
             >
