@@ -144,7 +144,6 @@ export default function RoleSelector({ onStart }: RoleSelectorProps) {
   
   const pointerStateRef = useRef<Map<number, { x: number; y: number; index: number; scrolling: boolean }>>(new Map());
   const longPressConsumedRef = useRef<Set<number>>(new Set());
-  const pendingEditLongPressRef = useRef<{ index: number; role: string } | null>(null);
   const nextLongPressConsumedRef = useRef(false);
   const lastNextLongPressAtRef = useRef(0);
   const SCROLL_THRESHOLD = 10;
@@ -186,7 +185,6 @@ export default function RoleSelector({ onStart }: RoleSelectorProps) {
 
   const handleRolePointerDown = (index: number, e: React.PointerEvent) => {
     longPressConsumedRef.current.delete(index);
-    pendingEditLongPressRef.current = null;
     pointerStateRef.current.set(e.pointerId, { 
       x: e.clientX, 
       y: e.clientY, 
@@ -217,16 +215,9 @@ export default function RoleSelector({ onStart }: RoleSelectorProps) {
 
     if (longPressConsumedRef.current.has(index)) {
       longPressConsumedRef.current.delete(index);
-
-      const pendingEdit = pendingEditLongPressRef.current;
-      if (pendingEdit && pendingEdit.index === index) {
-        pendingEditLongPressRef.current = null;
-        promptForRoleName(pendingEdit.index, pendingEdit.role);
-      }
-
       return;
     }
-    
+
     if (state && !state.scrolling && state.index === index) {
       toggleRole(index);
     }
@@ -316,7 +307,6 @@ export default function RoleSelector({ onStart }: RoleSelectorProps) {
     }
 
     nextLongPressConsumedRef.current = true;
-    vibrateTap(HAPTIC_LONG_PRESS);
     if (!isWideMode) {
       setIsWideMode(true);
       setPlayerCount(selectedIndices.size);
@@ -342,10 +332,9 @@ export default function RoleSelector({ onStart }: RoleSelectorProps) {
   };
 
   const handleRoleLongPress = (role: string, index: number) => {
-    vibrateTap(HAPTIC_LONG_PRESS);
     longPressConsumedRef.current.add(index);
     if (isEditMode) {
-      pendingEditLongPressRef.current = { index, role };
+      promptForRoleName(index, role);
     } else {
       showRuleExplanation(role);
     }
