@@ -47,10 +47,6 @@
   font-weight: normal;
 }
 
-.text-button:active {
-  opacity: 0.7;
-}
-
 .add-custom-button {
   background-color: #fff;
   color: #000;
@@ -62,10 +58,6 @@
   margin-bottom: 16px;
   transition: all 0.2s ease;
   box-shadow: 0 2px 4px rgba(255, 255, 255, 0.2);
-}
-
-.add-custom-button:active {
-  transform: scale(0.96);
 }
 
 .role-grid {
@@ -111,10 +103,6 @@
 
 .role-card.selected .role-name {
   color: #000;
-}
-
-.role-card:active {
-  transform: scale(0.96);
 }
 
 .delete-button {
@@ -191,10 +179,7 @@
   justify-content: center;
   min-width: 40px;
   min-height: 40px;
-}
-
-.icon-button:active {
-  transform: scale(0.92);
+  border-radius: 50%; /* better ripple */
 }
 
 .header-icon {
@@ -218,10 +203,6 @@
   letter-spacing: 0.5px;
   min-width: 64px;
   flex-shrink: 0;
-}
-
-.next-button:not(:disabled):active {
-  transform: scale(0.96);
 }
 
 .next-button:disabled {
@@ -282,10 +263,6 @@
   background-color: #000;
   color: #fff;
   transition: all 0.2s ease;
-}
-
-.modal-buttons button:active {
-  transform: scale(0.96);
 }
 
 .modal-buttons button[type="button"] {

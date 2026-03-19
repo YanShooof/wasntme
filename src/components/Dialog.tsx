@@ -33,6 +33,7 @@ export default function Dialog({
   const [value, setValue] = useState(inputValue);
   const inputRef = useRef<HTMLInputElement>(null);
   const hasHebrew = /[\u0590-\u05FF]/.test(`${title} ${message ?? ''}`);
+  const HAPTIC_LONG_PRESS = 14;
 
   const vibrateTap = (pattern: number | number[]) => {
     if (typeof navigator !== 'undefined' && 'vibrate' in navigator) {
@@ -82,12 +83,11 @@ export default function Dialog({
   };
 
   const handleConfirm = () => {
-    vibrateTap([12, 18, 12]);
+    vibrateTap(HAPTIC_LONG_PRESS);
     onConfirm(isInput ? value : undefined);
   };
 
   const handleCancel = () => {
-    vibrateTap(12);
     onCancel();
   };
 

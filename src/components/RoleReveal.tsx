@@ -10,6 +10,7 @@ interface RoleRevealProps {
 }
 
 export default function RoleReveal({ roles, onBack }: RoleRevealProps) {
+  const HAPTIC_CONTEXT_CLICK = 10;
   const [players, setPlayers] = useState<string[]>([]);
   const [revealedIndices, setRevealedIndices] = useState<Set<number>>(new Set());
   const [currentlyPressedIndices, setCurrentlyPressedIndices] = useState<Set<number>>(new Set());
@@ -33,12 +34,25 @@ export default function RoleReveal({ roles, onBack }: RoleRevealProps) {
     if (saved) {
       try {
         const parsed = JSON.parse(saved);
-        setPlayers(parsed.slice(0, roles.length));
+        let loadedPlayers = parsed.slice(0, roles.length);
+        
+        // THE FIX: If the saved array has fewer players than current roles, 
+        // pad the remaining slots with default names so the modal renders them all.
+        if (loadedPlayers.length < roles.length) {
+          const extraPlayers = Array.from(
+            { length: roles.length - loadedPlayers.length }, 
+            (_, i) => `Player ${loadedPlayers.length + i + 1}`
+          );
+          loadedPlayers = [...loadedPlayers, ...extraPlayers];
+        }
+
+        setPlayers(loadedPlayers);
         return;
       } catch (e) {
         console.error('Failed to load players:', e);
       }
     }
+    
     const defaultNames = Array.from({ length: roles.length }, (_, i) => `Player ${i + 1}`);
     setPlayers(defaultNames);
   }, [roles.length]);
@@ -50,7 +64,7 @@ export default function RoleReveal({ roles, onBack }: RoleRevealProps) {
     pointerToCardRef.current.clear();
   }, [roles]);
 
-  const vibrateTap = (ms = 20) => { navigator.vibrate?.(ms); };
+  const vibrateTap = (pattern: number | number[] = HAPTIC_CONTEXT_CLICK) => { navigator.vibrate?.(pattern); };
 
   const finalizePointer = (pointerId: number) => {
     const index = pointerToCardRef.current.get(pointerId);
@@ -111,12 +125,6 @@ export default function RoleReveal({ roles, onBack }: RoleRevealProps) {
     setPlayers(newNames);
     localStorage.setItem('playerNames', JSON.stringify(newNames));
     setShowPlayerEdit(false);
-  };
-
-  const handleResetPlayers = () => {
-    const defaultNames = Array.from({ length: roles.length }, (_, i) => `Player ${i + 1}`);
-    setPlayers(defaultNames);
-    localStorage.setItem('playerNames', JSON.stringify(defaultNames));
   };
 
   const handlePlayerEdit = () => {
@@ -242,7 +250,6 @@ export default function RoleReveal({ roles, onBack }: RoleRevealProps) {
         <PlayerEditModal
           players={players}
           onSave={handleSavePlayers}
-          onReset={handleResetPlayers}
           onClose={() => setShowPlayerEdit(false)}
         />
       )}
@@ -264,42 +271,48 @@ export default function RoleReveal({ roles, onBack }: RoleRevealProps) {
 interface PlayerEditModalProps {
   players: string[];
   onSave: (players: string[]) => void;
-  onReset: () => void;
   onClose: () => void;
 }
 
-function PlayerEditModal({ players, onSave, onReset, onClose }: PlayerEditModalProps) {
+function PlayerEditModal({ players, onSave, onClose }: PlayerEditModalProps) {
+  const HAPTIC_CONTEXT_CLICK = 10;
   const [editedPlayers, setEditedPlayers] = useState([...players]);
+  const defaultNames = Array.from({ length: editedPlayers.length }, (_, i) => `Player ${i + 1}`);
+  const canReset = editedPlayers.some((name, i) => name !== defaultNames[i]);
 
-  const vibrateTap = (pattern: number | number[]) => {
+  const vibrateTap = (pattern: number | number[] = HAPTIC_CONTEXT_CLICK) => {
     if (typeof navigator !== 'undefined' && 'vibrate' in navigator) {
       navigator.vibrate(pattern);
     }
   };
 
   const handleResetClick = () => {
-    vibrateTap(12);
-    const defaultNames = Array.from({ length: editedPlayers.length }, (_, i) => `Player ${i + 1}`);
+    if (!canReset) return;
+    vibrateTap();
     setEditedPlayers(defaultNames);
-    onReset();
   };
 
   const handleCancel = () => {
-    vibrateTap(12);
+    vibrateTap();
     onClose();
   };
 
   const handleAdd = () => {
-    vibrateTap([12, 18, 12]);
+    vibrateTap();
     onSave(editedPlayers);
   };
 
   return (
     <div className="modal-overlay" onClick={handleCancel}>
       <div className="modal-content player-edit" onClick={(e) => e.stopPropagation()}>
-        <div style={{ display: 'flex', alignItems: 'center', marginBottom: '16px' }}>
-          <h2 style={{ margin: 0, flex: 1 }}>Add players</h2>
-          <button className="icon-button" onClick={handleResetClick}>
+        <div className="player-edit-header">
+          <h2 className="player-edit-title">Add players</h2>
+          <button
+            className={`icon-button player-edit-reset ${canReset ? 'active' : 'disabled'}`}
+            onClick={handleResetClick}
+            disabled={!canReset}
+            aria-disabled={!canReset}
+          >
             <img src={`${import.meta.env.BASE_URL}reset.svg`} alt="Reset" className="header-icon" />
           </button>
         </div>
@@ -319,9 +332,9 @@ function PlayerEditModal({ players, onSave, onReset, onClose }: PlayerEditModalP
             />
           ))}
         </div>
-        <div className="modal-buttons">
-          <button type="button" onClick={handleCancel}>Cancel</button>
-          <button onClick={handleAdd}>Add</button>
+        <div className="dialog-actions">
+          <button className="dialog-button" type="button" onClick={handleCancel}>Cancel</button>
+          <button className="dialog-button dialog-button-primary" onClick={handleAdd}>Set</button>
         </div>
       </div>
     </div>

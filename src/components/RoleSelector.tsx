@@ -12,6 +12,8 @@ const useLongPress = (callback: () => void, ms = 500) => {
   const timerRef = useRef<number | undefined>(undefined);
   const callbackRef = useRef(callback);
   const pointerStartRef = useRef<{ x: number; y: number } | null>(null);
+  const isPressingRef = useRef(false);
+  const hasFiredRef = useRef(false);
   const ignoreMouseRef = useRef(false);
   const ignoreMouseTimeoutRef = useRef<number | undefined>(undefined);
   const SCROLL_THRESHOLD = 10;
@@ -20,12 +22,18 @@ const useLongPress = (callback: () => void, ms = 500) => {
     callbackRef.current = callback;
   }, [callback]);
 
-  const clearPress = () => {
+  const clearTimer = () => {
     if (timerRef.current) {
       clearTimeout(timerRef.current);
       timerRef.current = undefined;
     }
+  };
+
+  const finishPress = () => {
+    clearTimer();
     pointerStartRef.current = null;
+    isPressingRef.current = false;
+    hasFiredRef.current = false;
   };
 
   const markTouchInteraction = () => {
@@ -40,9 +48,16 @@ const useLongPress = (callback: () => void, ms = 500) => {
   };
 
   const startPress = (e: React.PointerEvent) => {
-    clearPress();
+    if (isPressingRef.current) return;
+
+    clearTimer();
+    isPressingRef.current = true;
+    hasFiredRef.current = false;
     pointerStartRef.current = { x: e.clientX, y: e.clientY };
+
     timerRef.current = window.setTimeout(() => {
+      if (!isPressingRef.current || hasFiredRef.current) return;
+      hasFiredRef.current = true;
       callbackRef.current();
       timerRef.current = undefined;
     }, ms);
@@ -55,13 +70,13 @@ const useLongPress = (callback: () => void, ms = 500) => {
     const dy = Math.abs(e.clientY - pointerStartRef.current.y);
     
     if (dx > SCROLL_THRESHOLD || dy > SCROLL_THRESHOLD) {
-      clearPress();
+      finishPress();
     }
   };
 
   useEffect(() => {
     return () => {
-      clearPress();
+      finishPress();
       if (ignoreMouseTimeoutRef.current) {
         clearTimeout(ignoreMouseTimeoutRef.current);
       }
@@ -75,11 +90,11 @@ const useLongPress = (callback: () => void, ms = 500) => {
     },
     onMouseUp: () => {
       if (ignoreMouseRef.current) return;
-      clearPress();
+      finishPress();
     },
     onMouseLeave: () => {
       if (ignoreMouseRef.current) return;
-      clearPress();
+      finishPress();
     },
     onMouseMove: (e: React.MouseEvent) => {
       if (ignoreMouseRef.current) return;
@@ -92,11 +107,11 @@ const useLongPress = (callback: () => void, ms = 500) => {
     },
     onTouchEnd: () => {
       markTouchInteraction();
-      clearPress();
+      finishPress();
     },
     onTouchCancel: () => {
       markTouchInteraction();
-      clearPress();
+      finishPress();
     },
     onTouchMove: (e: React.TouchEvent) => {
       markTouchInteraction();
@@ -107,7 +122,8 @@ const useLongPress = (callback: () => void, ms = 500) => {
 };
 
 export default function RoleSelector({ onStart }: RoleSelectorProps) {
-  const LONG_PRESS_VIBRATION_MS = 20;
+  const HAPTIC_CONTEXT_CLICK = 10;
+  const HAPTIC_LONG_PRESS = 14;
   const [customRoles, setCustomRoles] = useState<string[]>([...defaultRoles]);
   const [selectedIndices, setSelectedIndices] = useState<Set<number>>(new Set());
   const [isEditMode, setIsEditMode] = useState(false);
@@ -133,9 +149,9 @@ export default function RoleSelector({ onStart }: RoleSelectorProps) {
   const lastNextLongPressAtRef = useRef(0);
   const SCROLL_THRESHOLD = 10;
 
-  const vibrateTap = (ms = 20) => {
+  const vibrateTap = (pattern: number | number[] = HAPTIC_CONTEXT_CLICK) => {
     if (typeof navigator !== 'undefined' && 'vibrate' in navigator) {
-      navigator.vibrate(ms);
+      navigator.vibrate(pattern);
     }
   };
 
@@ -221,6 +237,11 @@ export default function RoleSelector({ onStart }: RoleSelectorProps) {
     updated[index] = newName;
     setCustomRoles(updated);
     localStorage.setItem('customRoles', JSON.stringify(updated));
+    setSelectedIndices(prev => {
+      const newSelected = new Set(prev);
+      newSelected.add(index);
+      return newSelected;
+    });
   };
 
   const handleReset = () => {
@@ -295,7 +316,7 @@ export default function RoleSelector({ onStart }: RoleSelectorProps) {
     }
 
     nextLongPressConsumedRef.current = true;
-    vibrateTap(LONG_PRESS_VIBRATION_MS);
+    vibrateTap(HAPTIC_LONG_PRESS);
     if (!isWideMode) {
       setIsWideMode(true);
       setPlayerCount(selectedIndices.size);
@@ -321,7 +342,7 @@ export default function RoleSelector({ onStart }: RoleSelectorProps) {
   };
 
   const handleRoleLongPress = (role: string, index: number) => {
-    vibrateTap(LONG_PRESS_VIBRATION_MS);
+    vibrateTap(HAPTIC_LONG_PRESS);
     longPressConsumedRef.current.add(index);
     if (isEditMode) {
       pendingEditLongPressRef.current = { index, role };
@@ -333,9 +354,9 @@ export default function RoleSelector({ onStart }: RoleSelectorProps) {
   const promptForRoleName = (index: number, currentName: string) => {
     setDialog({
       title: `Change ${currentName} to:`,
-
       inputValue: currentName,
       isInput: true,
+      confirmText: 'Set',
       onConfirm: (newName) => {
         setDialog(null);
         if (newName && newName.trim()) {
@@ -367,7 +388,7 @@ export default function RoleSelector({ onStart }: RoleSelectorProps) {
         <button
           className='icon-button'
           onClick={() => {
-            vibrateTap();
+            vibrateTap(HAPTIC_CONTEXT_CLICK);
             setIsEditMode(!isEditMode);
           }}
         >
